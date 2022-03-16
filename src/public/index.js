@@ -24,6 +24,7 @@ function postAPI(url = '', data = {}){
 }
 
 let productos;
+let chat;
 
 const updateProductTable = () => {
     productos = fetch ('/api/products')
@@ -50,20 +51,34 @@ const updateProductTable = () => {
     })
 }
 
+const updateChat = () => {
+    chat = fetch ('/api/messages')
+    .then(response => response.json())
+    .then((load) => {
+        load = load.message;
+        let log = document.getElementById('chatList')
+        let messages = "";
+        load.forEach(message=>{
+            messages  = messages+ `${message.mail} ${message.date} dice: ${message.message}</br>`;
+        })
+    log.innerHTML = messages;
+    })
+}
+
 updateProductTable();
+updateChat();
 
 newMessage.addEventListener("submit", (e) => {
     e.preventDefault();
-    socket.emit('newMessage',{mail: document.sendMessage.mail.value , date: (new Date).toLocaleString(),message: document.sendMessage.message.value });
+    const message = {mail: document.sendMessage.mail.value , date: (new Date).toLocaleString(),message: document.sendMessage.message.value};
+    postAPI('/api/messages', message)
+    .then(updateChat())
+    .then(socket.emit('newMessage',chat));
 })
     
-socket.on('refreshChat', chat => {
-    let log = document.getElementById('chatList')
-    let messages = "";
-    chat.forEach(message=>{
-        messages  = messages+ `${message.mail} ${message.date} dice: ${message.message}</br>`;
-    })
-    log.innerHTML = messages;
+socket.on('refreshChat', messages => {
+    chat = messages;
+    updateChat();
 })
 
 

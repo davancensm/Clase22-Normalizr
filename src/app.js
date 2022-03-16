@@ -1,6 +1,7 @@
-const express = require('express')
-const productosRouter = require('./routes/routes');
-const {Server} = require('socket.io')
+import express from 'express';
+import productosRouter from './routes/routes.js';
+import { Server } from 'socket.io';
+
 
 const app = express();
 
@@ -18,14 +19,10 @@ app.use(express.static('public'));
 
 app.use('/api',productosRouter);
 
-let chat = [];
-
 io.on('connection', (socket) => {
     console.log("Usuario Conectado")
-    socket.emit('refreshChat',chat);
     socket.on('newMessage', (data) => {
-        chat.push(data);
-        io.emit('refreshChat',chat);
+        io.emit('refreshChat',data);
     })
     socket.on('newProduct', (data) =>{
         io.emit('refreshProducts',data);
