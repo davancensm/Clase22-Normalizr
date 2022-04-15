@@ -1,4 +1,18 @@
+// import { denormalize, schema } from 'normalizr';
+// const denormalize = normalizr().denormalize;
+// const schema = normalizr().schema;
 const socket = io();
+
+
+const author = new normalizr.schema.Entity('authors');
+const message = new normalizr.schema.Entity('message',{
+    message:author
+})
+const messagesDBSchema = new normalizr.schema.Entity('messages',{
+    author:author,
+    messeges:[message]
+})
+
 
 let productlist = document.getElementById('productlist');
 let chatlist = document.getElementById('chatlist');
@@ -27,10 +41,10 @@ let productos;
 let chat;
 
 const updateProductTable = () => {
-    productos = fetch ('/api/products')
+    productos = fetch ('/api/products-test')
     .then(response => response.json())
     .then((load) => {
-        let data = load.products;
+        let data = load;
         let log = document.getElementById('productList')
         let products = `<div class="table-responsive">
         <table class="table table-dark">
@@ -44,7 +58,6 @@ const updateProductTable = () => {
             products  = products + ` <tr>
             <td>${product.title}</td>
             <td>${product.price}</td>
-            <td><img width=50 src=${product.thumbnail}></td>
         </tr>`
         })
         log.innerHTML = products; 
@@ -52,14 +65,18 @@ const updateProductTable = () => {
 }
 
 const updateChat = () => {
-    chat = fetch ('/api/messages')
+    chat = fetch('/api/messages')
     .then(response => response.json())
     .then((load) => {
-        load = load.message;
+        let normalizado = JSON.stringify(load,null,'\t').length;
+        load = normalizr.denormalize(load.result,[messagesDBSchema],load.entities);
+        let denormalizado = JSON.stringify(load,null,'\t').length;
+        let compresion = document.getElementById("compresion");
+        compresion.innerHTML = `Compresión del %${(normalizado*100/denormalizado).toFixed(0)}`;
         let log = document.getElementById('chatList')
         let messages = "";
         load.forEach(message=>{
-            messages  = messages+ `${message.mail} ${message.date} dice: ${message.message}</br>`;
+            messages  = messages+ `${message.author.id} dice: ${message.message}</br>`;
         })
     log.innerHTML = messages;
     })
@@ -70,7 +87,16 @@ updateChat();
 
 newMessage.addEventListener("submit", (e) => {
     e.preventDefault();
-    const message = {mail: document.sendMessage.mail.value , date: (new Date).toLocaleString(),message: document.sendMessage.message.value};
+    const message = {
+        message : document.sendMessage.message.value,
+        author: {
+            id: document.sendMessage.mail.value,
+            name: document.sendMessage.name.value,
+            surname: document.sendMessage.surname.value,
+            age: document.sendMessage.age.value,
+            nickname: document.sendMessage.nickname.value,
+            }
+        }
     postAPI('/api/messages', message)
     .then(updateChat())
     .then(socket.emit('newMessage',chat));

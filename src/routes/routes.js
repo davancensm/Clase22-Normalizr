@@ -1,8 +1,8 @@
 import express from 'express';
-import productManager from '../managers/ProductManager.js'
+import ProductManagerExtended from '../managers/ProductMocks.js';
 import MessageManager from '../managers/MessageManager.js';
 
-const products = new productManager();
+const products = new ProductManagerExtended();
 const messages = new MessageManager();
 
 
@@ -11,7 +11,11 @@ const router = express.Router();
 router.get('/products', (req,res) =>{
     const allProducts = products.getAll()
     .then((data) => res.send(data))
- 
+})
+
+router.get('/products-test', (req,res) =>{
+    const allProducts = products.createProducts(5)
+    res.send(allProducts);
 })
 
 router.post('/products', (req,res) => {

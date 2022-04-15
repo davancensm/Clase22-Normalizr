@@ -1,7 +1,7 @@
 import express from 'express';
+import { normalize,denormalize,schema } from "normalizr";
 import productosRouter from './routes/routes.js';
 import { Server } from 'socket.io';
-
 
 const app = express();
 
@@ -16,6 +16,16 @@ server.on("error", error => console.log(`Error en servidor ${error}`));
 app.use(express.urlencoded({extended:true}));
 app.use(express.json());
 app.use(express.static('public'));
+
+const authorSchema = new schema.Entity('author');
+const messageSchema = new schema.Entity('messages',{
+    author:authorSchema
+});
+const messagesDBSchema = new schema.Entity('messagesDB',{
+    messages : [messageSchema]
+});
+
+
 
 app.use('/api',productosRouter);
 
